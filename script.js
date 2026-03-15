@@ -10,7 +10,7 @@ bar.style.width="0%";
 return;
 }
 
-/* strict protocol check */
+/* protocol validation */
 
 if(/^https?:\/(?!\/)/.test(input) || input.includes("http//") || input.includes("https//")){
 result.style.color="red";
@@ -27,7 +27,7 @@ if(!url.startsWith("http://") && !url.startsWith("https://")){
 url="https://"+url;
 }
 
-/* parse url */
+/* parse URL */
 
 let parsed;
 
@@ -54,22 +54,32 @@ return;
 
 let risk=0;
 
-/* rules */
+/* HTTP (not secure) */
 
-if(parsed.protocol==="http:") risk+=15;
+if(parsed.protocol==="http:") risk+=40;
+
+/* phishing tricks */
 
 if(url.includes("@")) risk+=30;
 
-if(/(\d{1,3}\.){3}\d{1,3}/.test(host)) risk+=30;
+/* IP address domain */
+
+if(/(\d{1,3}\.){3}\d{1,3}/.test(host)) risk+=40;
+
+/* too many subdomains */
 
 let parts=host.split(".");
 if(parts.length>3) risk+=10;
 
+/* suspicious keywords */
+
 let keywords=["login","verify","bank","update","account","secure","signin","password"];
 
 keywords.forEach(word=>{
-if(url.toLowerCase().includes(word)) risk+=10;
+if(host.toLowerCase().includes(word)) risk+=30;
 });
+
+/* suspicious TLD */
 
 let badTLD=[".ru",".tk",".xyz",".ml",".cf",".gq",".top"];
 
@@ -77,15 +87,19 @@ badTLD.forEach(tld=>{
 if(host.endsWith(tld)) risk+=25;
 });
 
+/* very long url */
+
 if(url.length>75) risk+=10;
+
+/* normalize risk */
 
 if(risk>100) risk=100;
 
 let safe=100-risk;
 
-/* result */
+/* RESULT */
 
-if(risk>=50){
+if(risk>=70){
 
 result.style.color="red";
 result.innerText="🚨 High Risk Phishing ("+safe+"% safe)";
@@ -94,7 +108,8 @@ bar.style.width=risk+"%";
 bar.style.background="red";
 
 }
-else if(risk>=25){
+
+else if(risk>=40){
 
 result.style.color="orange";
 result.innerText="⚠️ Suspicious URL ("+safe+"% safe)";
@@ -103,6 +118,7 @@ bar.style.width=risk+"%";
 bar.style.background="orange";
 
 }
+
 else{
 
 result.style.color="green";
